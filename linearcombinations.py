@@ -345,8 +345,3 @@ class Operations:
                 self.partition_sum.remove([(partitions.get(i2)), i2])
                 self.partition_sum.append([partitions.get(i2) + i1, i2])
                 partitions[i2] = partitions.get(i2) + i1
-
-
-if __name__ == '__main__':
-    generate_A_B(5, 2, 2)
-    pass
