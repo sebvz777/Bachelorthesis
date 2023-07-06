@@ -488,12 +488,7 @@ class Partition:
         """
         assert (isinstance(top, typing.List)), f"invalid type: got {type(top).__name__} but needed List"
         assert (isinstance(bottom, typing.List)), f"invalid type: got {type(top).__name__} but needed List"
-        for i in top:
-            assert (isinstance(i, int) or isinstance(i,
-                                                     float)), f"invalid type: got {type(top).__name__} but needed int or float"
-        for i in bottom:
-            assert (isinstance(i, int) or isinstance(i,
-                                                     float)), f"invalid type: got {type(top).__name__} but needed int or float"
+
         self.partition = [top, bottom]
 
     def helper_new_id_values(self, x: "Partition") -> "Partition":
