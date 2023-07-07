@@ -589,7 +589,7 @@ class Partition:
 
         return ret
 
-    def rotation(self, lr: bool, top: bool, hash_form=True):
+    def rotation(self, lr: bool, top: bool):
         """
             input: lr whether left (true) or right (false)
                     top whether top (true) or bottom (false) rotation
@@ -621,8 +621,7 @@ class Partition:
                 a = ret.partition[1][-1]
                 del ret.partition[1][-1]
                 ret.partition[0].append(a)
-        if hash_form:
-            ret.hash_form()
+
         return ret
 
     def composition(self, q: "Partition", loop=False):
@@ -736,7 +735,7 @@ class Partition:
         """
             Output: Size of self (regarding nodes)
             """
-        return len(self.partition[0] + self.partition[1])
+        return len(self.partition[0]) + len(self.partition[1])
 
     def ret_tuple(self):
         """
@@ -763,4 +762,4 @@ class Partition:
 
 if __name__ == "__main__":
 
-    print(len(build([], 10)))
+    pass
