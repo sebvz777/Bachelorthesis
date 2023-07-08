@@ -51,7 +51,22 @@ def add_to_set_in_dict_for_composition(tuple_dict_set, partition):
     return tuple_dict_set
 
 
-def do_unary(to_unary, all_partitions, stop_whole, already_u, max_length, all_partitions_by_size, all_partitions_by_size_top_bottom):
+def get_trace(trace, start):
+    """track the trace with breath first search"""
+
+    if start not in trace:
+        print(f"Partition {start} not found in trace")
+
+    track = [start]
+    for p in track:
+        if p in trace:
+            print(p, " : ", trace.get(p))
+            for i in trace.get(p)[0]:
+                if i not in track:
+                    track.append(i)
+
+
+def do_unary(to_unary, all_partitions, stop_whole, already_u, max_length, all_partitions_by_size, all_partitions_by_size_top_bottom, trace):
     """
     Do all possible combinations of unary operations
     :param to_unary: partitions on which we do the unary operations
@@ -61,6 +76,7 @@ def do_unary(to_unary, all_partitions, stop_whole, already_u, max_length, all_pa
     :param max_length: max(n, size(biggest partition))
     :param all_partitions_by_size: all partitions stored in a dict from size to set()
     :param all_partitions_by_size_top_bottom: all partitions stored in a tuple of two dicts from size top/bottom to set()
+    :param trace the operations
     """
 
     stop = False
@@ -83,6 +99,7 @@ def do_unary(to_unary, all_partitions, stop_whole, already_u, max_length, all_pa
 
             """add to all_partitions"""
             if a.ret_tuple() not in all_partitions:
+                trace[a.ret_tuple()] = tuple([tuple([pmod.ret_tuple(), "r"])])
                 stop_whole = False
                 stop = False
                 all_partitions.add(a.ret_tuple())
@@ -99,6 +116,7 @@ def do_unary(to_unary, all_partitions, stop_whole, already_u, max_length, all_pa
 
             """add to all_partitions"""
             if a.ret_tuple() not in all_partitions:
+                trace[a.ret_tuple()] = tuple([tuple([pmod.ret_tuple(), "i"])])
                 stop_whole = False
                 stop = False
                 all_partitions.add(a.ret_tuple())
@@ -115,6 +133,7 @@ def do_unary(to_unary, all_partitions, stop_whole, already_u, max_length, all_pa
 
             """add to all_partitions"""
             if a.ret_tuple() not in all_partitions:
+                trace[a.ret_tuple()] = tuple([tuple([pmod.ret_tuple(), "iy"])])
                 stop_whole = False
                 stop = False
                 all_partitions.add(a.ret_tuple())
@@ -129,7 +148,7 @@ def do_unary(to_unary, all_partitions, stop_whole, already_u, max_length, all_pa
             already_u.add(pp.ret_tuple())
             to_unary.remove(pp)
 
-    return stop_whole, all_partitions, already_u, all_partitions_by_size, all_partitions_by_size_top_bottom
+    return stop_whole, all_partitions, already_u, all_partitions_by_size, all_partitions_by_size_top_bottom, trace
 
 
 def do_unary2(to_unary, all_partitions, stop_whole, already_u, max_length, all_partitions_by_size, all_partitions_by_size_top_bottom):
@@ -189,7 +208,7 @@ def do_unary2(to_unary, all_partitions, stop_whole, already_u, max_length, all_p
     return stop_whole, all_partitions, already_u, all_partitions_by_size, all_partitions_by_size_top_bottom
 
 
-def do_tensor_products(all_partitions, already_t, to_tens, stop_whole, max_length, all_partitions_by_size, all_partitions_by_size_top_bottom):
+def do_tensor_products(all_partitions, already_t, to_tens, stop_whole, max_length, all_partitions_by_size, all_partitions_by_size_top_bottom, trace):
     """
     Do all possible tensor products, while not repeating old calculations
     :param all_partitions: all found partitions
@@ -199,6 +218,7 @@ def do_tensor_products(all_partitions, already_t, to_tens, stop_whole, max_lengt
     :param max_length: max(n, size(biggest partition))
     :parem all_partitions_by_size: for improving runtime: all_partitions ordered by size
     :param all_partitions_by_size_top_bottom: all partitions stored in a tuple of two dicts from size top/bottom to set()
+    :param trace the operations
     """
     """analogical to all_pyrtitions_by_size in build function for new_tens"""
     new_tens_by_size = dict()
@@ -242,6 +262,7 @@ def do_tensor_products(all_partitions, already_t, to_tens, stop_whole, max_lengt
             a = a.tensor_product(tuple_to_partition(ii))
             to_tens.remove((i, ii))
             if a.ret_tuple() not in all_partitions:
+                trace[a.ret_tuple()] = ((i, ii), "t")
                 if a.size() == max_length:
                     all_partitions.add(a.ret_tuple())
 
@@ -270,10 +291,10 @@ def do_tensor_products(all_partitions, already_t, to_tens, stop_whole, max_lengt
                 else:
                     without.get(i).add(ii)
 
-    return all_partitions, already_t, stop_whole, all_partitions_by_size, all_partitions_by_size_top_bottom
+    return all_partitions, already_t, stop_whole, all_partitions_by_size, all_partitions_by_size_top_bottom, trace
 
 
-def do_composition(all_partitions, already_c, stop_whole, max_length, to_comp, all_partitions_by_size, all_partitions_by_size_top_bottom):
+def do_composition(all_partitions, already_c, stop_whole, max_length, to_comp, all_partitions_by_size, all_partitions_by_size_top_bottom, trace):
     """
     Do all possible compositions
     :param all_partitions: all found partitions
@@ -283,6 +304,7 @@ def do_composition(all_partitions, already_c, stop_whole, max_length, to_comp, a
     :param max_length: max(n, size(biggest partition))
     :param all_partitions_by_size: all partitions stored in a dict from size to set()
     :param all_partitions_by_size_top_bottom: all partitions stored in a tuple of two dicts from size top/bottom to set()
+    :param trace: trace the operations
     """
 
     """add newfound partitions due comp"""
@@ -333,6 +355,7 @@ def do_composition(all_partitions, already_c, stop_whole, max_length, to_comp, a
         for (i, ii) in al:
             a = tuple_to_partition(i).composition(tuple_to_partition(ii))
             if a.ret_tuple() not in all_partitions:
+                trace[a.ret_tuple()] = ((i, ii), "c")
                 all_partitions.add(a.ret_tuple())
 
                 """call function which adds the partition a into the right set in the dicts"""
@@ -352,14 +375,16 @@ def do_composition(all_partitions, already_c, stop_whole, max_length, to_comp, a
                 else:
                     without.get(i).add(ii)
 
-    return all_partitions, already_c, stop_whole, all_partitions_by_size, all_partitions_by_size_top_bottom
+    return all_partitions, already_c, stop_whole, all_partitions_by_size, all_partitions_by_size_top_bottom, trace
 
 
-def build(p, n):
+def build(p, n, tracing=False, max_artificial=0):
     """
     Build all possible partitions of size n with list of partitions p
     :param p: list of partitions
     :param n: size of outcome partitions
+    :param tracing: activate tracing and get the output (category, trace)
+    :param max_artificial > 0 if we need to increase the extinction
     :return: list of all partitions size n constructed from partitions in p
     """
 
@@ -390,6 +415,9 @@ def build(p, n):
     """all candidates for unary operations"""
     to_unary = set(p.copy())
 
+    """trace for tracing"""
+    trace = dict()
+
     """compare allowed expansion size with max(n, max_length)"""
     max_length = n
 
@@ -397,6 +425,9 @@ def build(p, n):
     for i in p:
         if i.size() > max_length:
             max_length = i.size()
+
+    if max_artificial:
+        max_length = max_artificial
 
     """define for all i <= size an empty set in which we fill the corresponding partition of size i (for tensor)"""
     for i in range(max_length+1):
@@ -426,7 +457,7 @@ def build(p, n):
                 to_unary.add(tuple_to_partition(i))
 
         """fist phase: all possible combinations of unary operations"""
-        stop_whole, all_partitions, already_u, all_partitions_by_size, all_partitions_by_size_top_bottom = do_unary(to_unary, all_partitions, stop_whole, already_u, max_length, all_partitions_by_size, all_partitions_by_size_top_bottom)
+        stop_whole, all_partitions, already_u, all_partitions_by_size, all_partitions_by_size_top_bottom, trace = do_unary(to_unary, all_partitions, stop_whole, already_u, max_length, all_partitions_by_size, all_partitions_by_size_top_bottom, trace)
 
         """store pairs that are candidates to get tensor product"""
         to_tens = set()
@@ -446,7 +477,7 @@ def build(p, n):
 
         """second phase: all possible tensor product operations which aren't redundant (don't do tensor products 
         twice) """
-        all_partitions, already_t, stop_whole, all_partitions_by_size, all_partitions_by_size_top_bottom = do_tensor_products(all_partitions, already_t, to_tens, stop_whole, max_length, all_partitions_by_size, all_partitions_by_size_top_bottom)
+        all_partitions, already_t, stop_whole, all_partitions_by_size, all_partitions_by_size_top_bottom, trace = do_tensor_products(all_partitions, already_t, to_tens, stop_whole, max_length, all_partitions_by_size, all_partitions_by_size_top_bottom, trace)
 
         """add new variations by tensor product or composition with all others"""
         to_comp = set()
@@ -462,7 +493,7 @@ def build(p, n):
                         already_c.add((i, ii))
 
         """third phase: all possible compositions which aren't redundant (don't do tensor products twice)"""
-        all_partitions, already_c, stop_whole, all_partitions_by_size, all_partitions_by_size_top_bottom = do_composition(all_partitions, already_c, stop_whole, max_length, to_comp, all_partitions_by_size, all_partitions_by_size_top_bottom)
+        all_partitions, already_c, stop_whole, all_partitions_by_size, all_partitions_by_size_top_bottom, trace = do_composition(all_partitions, already_c, stop_whole, max_length, to_comp, all_partitions_by_size, all_partitions_by_size_top_bottom, trace)
 
     """remove all partitions without size n"""
     for i in all_partitions:
@@ -475,6 +506,9 @@ def build(p, n):
     partitions = []
     for i in all_partitions_of_size_n:
         partitions.append(tuple_to_partition(i))
+
+    if tracing:
+        return partitions, trace
 
     return partitions
 

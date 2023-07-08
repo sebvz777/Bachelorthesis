@@ -1,5 +1,432 @@
-import partition
 import typing
+
+
+def tuple_to_partition(tup):
+    """
+        input: tup which represents a color partition with a tuple
+
+        output: corresponding color Partition
+        """
+    if isinstance(tup, SpatialPartitions):
+        tup = tup.ret_tuple()
+    assert len(tup) == 2
+    upper = []
+    for i in tup[0]:
+        upper.append(list(i))
+    lower = []
+    for i in tup[1]:
+        lower.append(list(i))
+
+    return SpatialPartitions(upper, lower)
+
+
+def add_to_set_in_dict(set_dict, partition):
+    """
+    Add partition into a dict of size to set.
+    :param set_dict: the dict from size to set
+    :param partition: the partition
+    :return: the new dict
+    """
+    assert isinstance(partition, SpatialPartitions)
+
+    add_apbs = set_dict.get(partition.size())
+    add_apbs.add(partition.ret_tuple())
+    set_dict[partition.size()] = add_apbs
+
+    return set_dict
+
+
+def add_to_set_in_dict_for_composition(tuple_dict_set, partition):
+    """
+    Add partition into the top and bottom dict from size to set
+    :param tuple_dict_set: the tuple with the dicts from size to set
+    :param partition: the partition
+    :return:
+    """
+
+    size_top = (0, 0)
+
+    if partition.partition[0]:
+        size_top = (len(partition.partition[0]), 0)
+        size_top = (size_top[0], len(partition.partition[0][0]))
+
+    """add right partition in first dict for top size"""
+    add_apbs_top = tuple_dict_set[0].get(size_top)
+    add_apbs_top.add(partition.ret_tuple())
+    (tuple_dict_set[0])[size_top] = add_apbs_top
+
+    size_bottom = (0, 0)
+
+    if partition.partition[1]:
+        size_bottom = (len(partition.partition[1]), 0)
+        size_bottom = (size_bottom[0], len(partition.partition[1][0]))
+
+    """add right partition in first dict for bottom size"""
+    add_apbs_bottom = tuple_dict_set[1].get(size_bottom)
+    add_apbs_bottom.add(partition.ret_tuple())
+    (tuple_dict_set[1])[size_bottom] = add_apbs_bottom
+
+    return tuple_dict_set
+
+
+def do_unary(to_unary, all_partitions, stop_whole, already_u, max_length, all_partitions_by_size, all_partitions_by_size_top_bottom, trace):
+    """
+    Do all possible combinations of unary operations
+    :param to_unary: partitions on which we do the unary operations
+    :param all_partitions: set in which we add the newfound partitions
+    :param stop_whole: False if we found new partitions
+    :param already_u: partitions we already have modified with unary operations
+    :param max_length: max(n, size(biggest partition))
+    :param all_partitions_by_size: all partitions stored in a dict from size to set()
+    :param all_partitions_by_size_top_bottom: all partitions stored in a tuple of two dicts from size top/bottom to set()
+    :param optional trace: if trace is activated store traces
+    """
+
+    stop = False
+    while not stop:
+        stop = True
+
+        to_unary_copy = to_unary.copy()
+
+        for pp in to_unary_copy:
+            assert isinstance(pp, SpatialPartitions)
+            pmod = SpatialPartitions(pp.partition[0].copy(), pp.partition[1].copy())
+
+            """involution"""
+            a = pmod.involution()
+            a.hash_form()
+
+            """add to all_partitions and optional trace"""
+            if a.ret_tuple() not in all_partitions:
+                trace[a.ret_tuple()] = pmod.ret_tuple()
+                stop_whole = False
+                stop = False
+                all_partitions.add(a.ret_tuple())
+                to_unary.add(a)
+
+                """call functions which adds the partition a into the right set in the dict"""
+                all_partitions_by_size = add_to_set_in_dict(all_partitions_by_size, a)
+                all_partitions_by_size_top_bottom = add_to_set_in_dict_for_composition(
+                        all_partitions_by_size_top_bottom, a)
+
+            """remember already unary"""
+            already_u.add(pp.ret_tuple())
+            to_unary.remove(pp)
+
+    return stop_whole, all_partitions, already_u, all_partitions_by_size, all_partitions_by_size_top_bottom, trace
+
+
+def do_tensor_products(all_partitions, already_t, to_tens, stop_whole, max_length, all_partitions_by_size, all_partitions_by_size_top_bottom, trace):
+    """
+    Do all possible tensor products, while not repeating old calculations
+    :param all_partitions: all found partitions
+    :param already_t: all pairs of partitions already tensor product
+    :param to_tens: pairs of partitions to tensor product
+    :param stop_whole: False if new partition found
+    :param max_length: max(n, size(biggest partition))
+    :parem all_partitions_by_size: for improving runtime: all_partitions ordered by size
+    :param all_partitions_by_size_top_bottom: all partitions stored in a tuple of two dicts from size top/bottom to set()
+    :param optional trace: if trace is activated store traces
+    """
+    """analogical to all_pyrtitions_by_size in build function for new_tens"""
+    new_tens_by_size = dict()
+    for i in range(max_length + 1):
+        new_tens_by_size[i] = set()
+    """store all partitions which are new constructed by tensor product"""
+    new_tens = set()
+    """store for every i the ii's which are already used, to not use them in this iteration again"""
+    without = {}
+
+    """until no more new possibilities tensor"""
+    stop = False
+    while not stop:
+        stop = True
+
+        """if there are new partitions due to tensor and size constraint, remove pair which are already 
+        calculated """
+        if new_tens:
+            aa = new_tens.union(all_partitions)
+            for i in aa:
+                """get fitting partitions in advance (improve runtime)"""
+                new_tens_temp_tensor = set()
+                for key in new_tens_by_size.keys():
+                    if tuple_to_partition(i).size() + int(key) <= max_length:
+                        new_tens_temp_tensor = new_tens_temp_tensor.union(new_tens_by_size.get(key))
+                if i in without.keys():
+                    for ii in new_tens_temp_tensor.difference(without.get(i)):
+                        if tuple_to_partition(i).size() + tuple_to_partition(ii).size() <= max_length and (i, ii) not in already_t:
+                            to_tens.add((i, ii))
+                            already_t.add((i, ii))
+                else:
+                    for ii in new_tens_temp_tensor:
+                        if tuple_to_partition(i).size() + tuple_to_partition(ii).size() <= max_length and (i, ii) not in already_t:
+                            to_tens.add((i, ii))
+                            already_t.add((i, ii))
+
+        """do the tensor products"""
+        al = to_tens.copy()
+        for (i, ii) in al:
+            a = tuple_to_partition(i)
+            a = a.tensor_product(tuple_to_partition(ii))
+            to_tens.remove((i, ii))
+            if a.ret_tuple() not in all_partitions:
+                trace[a.ret_tuple()] = (i, ii)
+                if a.size() == max_length:
+                    all_partitions.add(a.ret_tuple())
+
+                    """call function which adds the partition a into the right set in the dicts"""
+                    all_partitions_by_size = add_to_set_in_dict(all_partitions_by_size, a)
+                    all_partitions_by_size_top_bottom = add_to_set_in_dict_for_composition(
+                        all_partitions_by_size_top_bottom, a)
+
+                    stop_whole = False
+                else:
+                    all_partitions.add(a.ret_tuple())
+
+                    """call function which adds the partition a into the right set in the dicts"""
+                    all_partitions_by_size = add_to_set_in_dict(all_partitions_by_size, a)
+                    all_partitions_by_size_top_bottom = add_to_set_in_dict_for_composition(
+                        all_partitions_by_size_top_bottom, a)
+                    new_tens_by_size = add_to_set_in_dict(new_tens_by_size, a)
+
+                    stop_whole = False
+                    new_tens.add(a.ret_tuple())
+                    stop = False
+            else:
+                """remove not fitting candidates for further iterations"""
+                if i not in without.keys():
+                    without[i] = {ii}
+                else:
+                    without.get(i).add(ii)
+
+    return all_partitions, already_t, stop_whole, all_partitions_by_size, all_partitions_by_size_top_bottom, trace
+
+
+def do_composition(all_partitions, already_c, stop_whole, max_length, to_comp, all_partitions_by_size, all_partitions_by_size_top_bottom, trace):
+    """
+    Do all possible compositions
+    :param all_partitions: all found partitions
+    :param already_c: all pairs of partitions already composition
+    :param to_comp: pairs of partitions to composition
+    :param stop_whole: False if new partition found
+    :param max_length: max(n, size(biggest partition))
+    :param all_partitions_by_size: all partitions stored in a dict from size to set()
+    :param all_partitions_by_size_top_bottom: all partitions stored in a tuple of two dicts from size top/bottom to set()
+    :param optional trace: if trace is activated store traces
+    """
+
+    """add newfound partitions due comp"""
+    new_comp = set()
+
+    """new_comp stored in tuple with a dict for top and bottom size (analogical to the technique in build function)"""
+    new_comp_by_size_top_bottom = (dict(), dict())
+    for i in range(max_length+1):
+        for ii in range(max_length+1):
+            (new_comp_by_size_top_bottom[0])[(i, ii)] = set()
+            (new_comp_by_size_top_bottom[1])[(i, ii)] = set()
+
+    """store for every i the ii's which are already used, to not use them in this iteration again"""
+    without = {}
+
+    """until no more new possibilities compose"""
+    stop = False
+    while not stop:
+        stop = True
+
+        """if there are new partitions due to composition, remove pair which are already calculated"""
+        if new_comp:
+            aa = new_comp.union(all_partitions)
+            for i in aa:
+                """get fitting partitions in advance (improve runtime)"""
+                new_comp_temp_comp = set()
+                if len(i[0]) <= max_length:
+                    size_comp = (0, 0)
+                    if i[0]:
+                        size_comp = (len(i[0]), len(i[0][0]))
+                    new_comp_temp_comp = new_comp_by_size_top_bottom[1].get(size_comp)
+                if i in without.keys():
+                    for ii in new_comp_temp_comp.difference(without.get(i)):
+                        if len(i[0]) == len(ii[1]) and len(i[0]) != 0 and len(i[0]) != max_length and len(i[1]) + len(ii[0]) <= max_length:
+                            to_comp.add((i, ii))
+                            already_c.add((i, ii))
+                        if len(ii[0]) == len(i[1]) and len(ii[0]) != 0 and len(ii[0]) != max_length and len(ii[1]) + len(i[0]) <= max_length:
+                            to_comp.add((ii, i))
+                            already_c.add((ii, i))
+                else:
+                    for ii in new_comp_temp_comp:
+                        if len(i[0]) == len(ii[1]) and len(i[0]) != 0 and len(i[0]) != max_length and len(i[1]) + len(ii[0]) <= max_length:
+                            to_comp.add((i, ii))
+                            already_c.add((i, ii))
+                        if len(ii[0]) == len(i[1]) and len(ii[0]) != 0 and len(ii[0]) != max_length and len(ii[1]) + len(i[0]) <= max_length:
+                            to_comp.add((ii, i))
+                            already_c.add((ii, i))
+
+        """do the compositions"""
+        al = to_comp.copy()
+
+        for (i, ii) in al:
+            a = tuple_to_partition(i).composition(tuple_to_partition(ii))
+            if a.ret_tuple() not in all_partitions and a.size() <= max_length:
+                trace[a.ret_tuple()] = (i, ii)
+                all_partitions.add(a.ret_tuple())
+
+                """call function which adds the partition a into the right set in the dicts"""
+                all_partitions_by_size = add_to_set_in_dict(all_partitions_by_size, a)
+                all_partitions_by_size_top_bottom = add_to_set_in_dict_for_composition(
+                    all_partitions_by_size_top_bottom, a)
+                new_comp_by_size_top_bottom = add_to_set_in_dict_for_composition(new_comp_by_size_top_bottom, a)
+
+                stop_whole = False
+                new_comp.add(a.ret_tuple())
+                stop = False
+            else:
+                """remove not fitting candidates for further iterations"""
+                to_comp.remove((i, ii))
+                if i not in without.keys():
+                    without[i] = {ii}
+                else:
+                    without.get(i).add(ii)
+
+    return all_partitions, already_c, stop_whole, all_partitions_by_size, all_partitions_by_size_top_bottom, trace
+
+
+def build(p, n, tracing=False, max_artificial=0):
+    """
+    Build all possible partitions of size n with list of partitions p
+    :param p: list of partitions
+    :param n: size of outcome partitions
+    :param tracing: outputs also trace of every partition
+    :param max_artificial > 0 if we need to increase the extinction
+    :return: list of all partitions size n constructed from partitions in p
+    """
+
+    assert isinstance(p, list)
+    assert isinstance(n, int)
+
+    """store all candidates found"""
+    all_partitions = set()
+
+    """trace dictionary"""
+    trace = dict()
+
+    """all candidates stored in dict from size to partition"""
+    all_partitions_by_size = dict()
+
+    """all candidates stored in tuple with a dict for top and bottom size"""
+    all_partitions_by_size_top_bottom = (dict(), dict())
+
+    """store partitions already unary"""
+    already_u = set()
+
+    """store partitions already tensor product"""
+    already_t = set()
+
+    """store partitions already composition"""
+    already_c = set()
+
+    """end output: All partitions found of size n """
+    all_partitions_of_size_n = set()
+
+    """all candidates for unary operations"""
+    to_unary = set(p.copy())
+
+    """compare allowed expansion size with max(n, max_length)"""
+    max_length = n
+
+    """get max length of a partition"""
+    for i in p:
+        if i.size() > max_length:
+            max_length = i.size()
+
+    if max_artificial:
+        max_length = max_artificial
+
+    """define for all i <= size an empty set in which we fill the corresponding partition of size i (for tensor)"""
+    for i in range(max_length+1):
+        all_partitions_by_size[i] = set()
+
+    """define for all bottom and top size an empty set in which we fill the corresponding partition"""
+    for i in range(max_length+1):
+        for ii in range(max_length+1):
+            (all_partitions_by_size_top_bottom[0])[(i, ii)] = set()
+            (all_partitions_by_size_top_bottom[1])[(i, ii)] = set()
+
+    """add all partitions in p to all_partitions_by_size and all_partitions_by_size_top_bottom"""
+    tuple_list_all_partitions = []
+    for i in all_partitions:
+        tuple_list_all_partitions.append(tuple_to_partition(i))
+    for i in p + tuple_list_all_partitions:
+        all_partitions_by_size = add_to_set_in_dict(all_partitions_by_size, i)
+        all_partitions_by_size_top_bottom = add_to_set_in_dict_for_composition(all_partitions_by_size_top_bottom, i)
+
+    """while new were found apply on them unary tensor and composition"""
+    stop_whole = False
+    while not stop_whole:
+        stop_whole = True
+
+        """add new found partitions in the unary operation candidate list"""
+        for i in all_partitions:
+            if i not in already_u:
+                to_unary.add(tuple_to_partition(i))
+
+        """fist phase: all possible combinations of unary operations"""
+        stop_whole, all_partitions, already_u, all_partitions_by_size, all_partitions_by_size_top_bottom, trace = do_unary(to_unary, all_partitions, stop_whole, already_u, max_length, all_partitions_by_size, all_partitions_by_size_top_bottom, trace)
+
+        """store pairs that are candidates to get tensor product"""
+        to_tens = set()
+
+        """get all pairs to tensor"""
+        for i in all_partitions:
+            """get fitting partitions in advance (improve runtime)"""
+            all_partitions_temp_tensor = set()
+            for key in all_partitions_by_size.keys():
+                if tuple_to_partition(i).size() + int(key) <= max_length:
+                    all_partitions_temp_tensor = all_partitions_temp_tensor.union(all_partitions_by_size.get(key))
+            for ii in all_partitions_temp_tensor:
+                if (i, ii) not in already_t:
+                    if tuple_to_partition(i).size() + tuple_to_partition(ii).size() <= max_length:
+                        to_tens.add((i, ii))
+                        already_t.add((i, ii))
+
+        """second phase: all possible tensor product operations which aren't redundant (don't do tensor products 
+        twice) """
+        all_partitions, already_t, stop_whole, all_partitions_by_size, all_partitions_by_size_top_bottom, trace = do_tensor_products(all_partitions, already_t, to_tens, stop_whole, max_length, all_partitions_by_size, all_partitions_by_size_top_bottom, trace)
+
+        """add new variations by tensor product or composition with all others"""
+        to_comp = set()
+
+        """get all pairs to compose"""
+        for i in all_partitions:
+            """get in advance the right second candidate (regarding format)"""
+            size_comp = (0, 0)
+            if i[0]:
+                size_comp = (len(i[0]), len(i[0][0]))
+            all_partitions_temp_comp = all_partitions_by_size_top_bottom[1].get(size_comp)
+            for ii in all_partitions_temp_comp:
+                if (i, ii) not in already_c:
+                    if len(i[0]) == len(ii[1]) and len(i[0]) != 0 and len(i[0]) != max_length and len(i[1]) + len(ii[0]) <= max_length:
+                        to_comp.add((i, ii))
+                        already_c.add((i, ii))
+
+        """third phase: all possible compositions which aren't redundant (don't do tensor products twice)"""
+        all_partitions, already_c, stop_whole, all_partitions_by_size, all_partitions_by_size_top_bottom, trace = do_composition(all_partitions, already_c, stop_whole, max_length, to_comp, all_partitions_by_size, all_partitions_by_size_top_bottom, trace)
+
+    """remove all partitions without size n"""
+    for i in all_partitions:
+        if tuple_to_partition(i).size() == n:
+            if i not in all_partitions_of_size_n:
+                all_partitions_of_size_n.add(i)
+
+    """format every tuple to partition and return"""
+
+    partitions = []
+    for i in all_partitions_of_size_n:
+        partitions.append(tuple_to_partition(i))
+
+    if tracing:
+        return partitions, trace
+
+    return partitions
 
 
 class SpatialPartitions:
@@ -63,7 +490,8 @@ class SpatialPartitions:
 
                         """Do path compression if we have the case that we need to merge two tree's together and
                         the nodes we operate on are not a root or a leaf"""
-                        for ii in [n]:
+
+                        for ii in [inner_n]:
                             path = [ii]
                             already_in = set()
                             already_in.add(new_ids.get(ii))
@@ -99,7 +527,7 @@ class SpatialPartitions:
             path.append(z)
             for nn in path[:-1]:
                 new_ids[nn] = path[-1]
-        print(new_ids, q_copy_new_ids)
+
         """giving the top part new values"""
         for i, n in enumerate(q_copy_new_ids[0]):
             for ii, nn in enumerate(n):
@@ -205,10 +633,44 @@ class SpatialPartitions:
 
         return tuple([tuple(tup_top), tuple(tup_bottom)])
 
+    def size(self):
+        size = 0
+        for i in self.partition[0] + self.partition[1]:
+            size += len(i)
+        return size
+
+    def __eq__(self, other: "SpatialPartitions"):
+        """
+        Check whether two spatial partitions are equal
+        """
+        self.hash_form()
+        other.hash_form()
+        return self.partition == other.partition
+
+    def __hash__(self):
+        """
+        Transform spatial partition in hashable form
+        """
+        self.hash_form()
+        return hash(self.ret_tuple())
+
+
+def get_trace(trace, start):
+    """track the trace with breath first search"""
+
+    if start not in trace:
+        print(f"Partition {start} not found in trace")
+
+    track = [start]
+    for p in track:
+        if p in trace:
+            print(p, " : ", trace.get(p))
+            for i in trace.get(p):
+                if i not in track:
+                    track.append(i)
+
 
 if __name__ == "__main__":
 
-    a = SpatialPartitions([[1, 2, 3], [4, 4, 5]], [[2, 1, 3], [6, 6, 5]])
-    b = SpatialPartitions([[1, 2, 3]], [[1, 4, 3], [4, 2, 3]])
+    pass
 
-    print(a.composition(b).ret_tuple())
