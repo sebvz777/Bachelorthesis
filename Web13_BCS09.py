@@ -5,7 +5,7 @@ from sympy import I
 from sympy.abc import d
 
 """
-The following functions have the purpose the evaluate results, regarding the papers [Web13] and [BCS09]:
+The following functions have the only purpose to evaluate results, regarding the papers [Web13] and [BCS09]:
 
 """
 

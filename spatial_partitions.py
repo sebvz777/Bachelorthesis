@@ -69,6 +69,21 @@ def add_to_set_in_dict_for_composition(tuple_dict_set, partition):
     return tuple_dict_set
 
 
+def get_trace(trace, start):
+    """track the trace with breath first search"""
+
+    if start not in trace:
+        print(f"Partition {start} not found in trace")
+
+    track = [start]
+    for p in track:
+        if p in trace:
+            print(p, " : ", trace.get(p))
+            for i in trace.get(p)[0]:
+                if i not in track:
+                    track.append(i)
+
+
 def do_unary(to_unary, all_partitions, stop_whole, already_u, max_length, all_partitions_by_size, all_partitions_by_size_top_bottom, trace):
     """
     Do all possible combinations of unary operations
@@ -98,7 +113,7 @@ def do_unary(to_unary, all_partitions, stop_whole, already_u, max_length, all_pa
 
             """add to all_partitions and optional trace"""
             if a.ret_tuple() not in all_partitions:
-                trace[a.ret_tuple()] = pmod.ret_tuple()
+                trace[a.ret_tuple()] = tuple([tuple([pmod.ret_tuple(), "i"])])
                 stop_whole = False
                 stop = False
                 all_partitions.add(a.ret_tuple())
@@ -170,7 +185,7 @@ def do_tensor_products(all_partitions, already_t, to_tens, stop_whole, max_lengt
             a = a.tensor_product(tuple_to_partition(ii))
             to_tens.remove((i, ii))
             if a.ret_tuple() not in all_partitions:
-                trace[a.ret_tuple()] = (i, ii)
+                trace[a.ret_tuple()] = ((i, ii), "t")
                 if a.size() == max_length:
                     all_partitions.add(a.ret_tuple())
 
@@ -267,7 +282,7 @@ def do_composition(all_partitions, already_c, stop_whole, max_length, to_comp, a
         for (i, ii) in al:
             a = tuple_to_partition(i).composition(tuple_to_partition(ii))
             if a.ret_tuple() not in all_partitions and a.size() <= max_length:
-                trace[a.ret_tuple()] = (i, ii)
+                trace[a.ret_tuple()] = ((i, ii), "c")
                 all_partitions.add(a.ret_tuple())
 
                 """call function which adds the partition a into the right set in the dicts"""
@@ -653,21 +668,6 @@ class SpatialPartitions:
         """
         self.hash_form()
         return hash(self.ret_tuple())
-
-
-def get_trace(trace, start):
-    """track the trace with breath first search"""
-
-    if start not in trace:
-        print(f"Partition {start} not found in trace")
-
-    track = [start]
-    for p in track:
-        if p in trace:
-            print(p, " : ", trace.get(p))
-            for i in trace.get(p):
-                if i not in track:
-                    track.append(i)
 
 
 if __name__ == "__main__":

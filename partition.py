@@ -422,7 +422,7 @@ def build(p, n, tracing=False, max_artificial=0):
     max_length = n
 
     """get max length of a partition"""
-    for i in p:
+    for i in p + [Partition([1], [1])]:
         if i.size() > max_length:
             max_length = i.size()
 
@@ -696,7 +696,7 @@ class Partition:
                         path.append(z)
                         for nn in path[:-1]:
                             new_ids[nn] = path[-1]
-                    new_ids[new_ids.get(n)] = self.partition[0][i]
+                    new_ids[new_ids.get(n)] = new_ids.get(self.partition[0][i])
                 else:
                     if new_ids.get(n) not in new_ids:
                         new_ids[new_ids.get(n)] = self.partition[0][i]
@@ -796,4 +796,10 @@ class Partition:
 
 if __name__ == "__main__":
 
-    pass
+    # Initialize Partition
+    p1 = Partition([1, 2], [2, 1])
+    p2 = Partition([1, 1], [1])
+
+    # Run constructing algorithm
+    print(len(build([], 10)))  # length of NC2 with size 10
+    print(len(build([p1, p2], 5)))  # length of P with size 5
