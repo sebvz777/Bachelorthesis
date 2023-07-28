@@ -70,6 +70,7 @@ def generate_A_B_random(n: int, size: int, k: int, l: int):
 
     """increment if we have generated a sequence which we already calculated"""
     mini_counter = 0
+    warning = False
 
     """increment if we generated a new sequence"""
     counter = 0
@@ -98,9 +99,10 @@ def generate_A_B_random(n: int, size: int, k: int, l: int):
 
             """to later check assumption: term of form d*(d - 2)*(d - 1)**q with q = sum of first k and l of 
             multiplication"""
-            if i == 0:
-                first_k_plus_l = rand_k + rand_l
 
+            if i == 0 or warning:
+                first_k_plus_l = rand_k + rand_l
+                warning = False
             if a_or_b:
                 a_b_constellation.append(("A", rand_k, rand_l))
             else:
@@ -119,6 +121,7 @@ def generate_A_B_random(n: int, size: int, k: int, l: int):
                 if val.lower() == "y":
                     return
             mini_counter += 1
+            warning = True
             continue
 
         """iterate through sequence and create the multiplication term"""
@@ -152,7 +155,10 @@ def generate_A_B_random(n: int, size: int, k: int, l: int):
         if str(factor(term.partition_sum[0][0]))[-1] == ")":
             assert first_k_plus_l + 1 == 1
         else:
-            assert first_k_plus_l + 1 == int(str(factor(term.partition_sum[0][0]))[-1])
+            if str(factor(term.partition_sum[0][0]))[-2] == "*":
+                assert first_k_plus_l + 1 == int(str(factor(term.partition_sum[0][0]))[-1])
+            else:
+                assert first_k_plus_l + 1 == int(str(factor(term.partition_sum[0][0]))[-2] + str(factor(term.partition_sum[0][0]))[-1])
         """print zero points"""
         print("zero points of " + str(a_b_constellation) + f" are " + str(zero), f" with the term {term} and the factorization {factor(term.partition_sum[0][0])}")
 
@@ -289,17 +295,24 @@ class Operations:
         """
         assert isinstance(o, Operations)
 
-        out = self.partition_sum.copy()
+        """init dict because of time complexity improvements and simplify to prevent information loss"""
+        self.simplify_operation()
+        dict_term = dict()
+        for i in self.partition_sum.copy():
+            dict_term[i[1]] = i[0]
+
         """iterate over the objects lists"""
-        for ii in o.partition_sum:
-            for index, i in enumerate(out): # potential to do faster with f.e. dict or set
-                """if a partition equals ii, only sum the terms"""
-                if ii[1].is_equal(i[1]):
-                    out[index] = [expand(out[index][0] + ii[0]), out[index][1]]
-                    break
+        for i in o.partition_sum:
+            if i[1] in dict_term:
+                d_term = dict_term.get(i[1])
+                d_term += i[0]
+                dict_term[i[1]] = d_term
             else:
-                """if no partition in self equals ii, just add ii to our output"""
-                out += [ii]
+                dict_term[i[1]] = i[0]
+
+        """transform dict to list and output object"""
+        out = [reversed(list(i)) for i in dict_term.items()]
+
         return Operations(out)
 
     def __mul__(self, o):
@@ -345,3 +358,9 @@ class Operations:
                 self.partition_sum.remove([(partitions.get(i2)), i2])
                 self.partition_sum.append([partitions.get(i2) + i1, i2])
                 partitions[i2] = partitions.get(i2) + i1
+
+
+if __name__ == "__main__":
+
+    """prints out list of the zero points"""
+    generate_A_B_random(200, 3000, 4, 4)

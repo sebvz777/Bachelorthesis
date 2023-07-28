@@ -671,6 +671,12 @@ class SpatialPartitions:
 
 
 if __name__ == "__main__":
+    """example of 4.3. 2."""
+    a = SpatialPartitions([], [[1, 1]])
+    b = SpatialPartitions([[1, 1]], [[1, 1]])
+    c = SpatialPartitions([[1, 2]], [[1, 3], [3, 2]])
+    d = SpatialPartitions([[1, 2], [2, 3]], [[1, 2], [2, 3]])
 
-    pass
+    p, trace = build([a, b, c], 8, True, 10)
 
+    get_trace(trace, d.ret_tuple())

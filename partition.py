@@ -796,10 +796,14 @@ class Partition:
 
 if __name__ == "__main__":
 
+    a, b = build([Partition([1], [2]), Partition([1, 1], [1, 1])], 4, True)
+
+    get_trace(b, Partition([1, 2], [3, 1]).ret_tuple())
+    """
     # Initialize Partition
     p1 = Partition([1, 2], [2, 1])
     p2 = Partition([1, 1], [1])
 
     # Run constructing algorithm
     print(len(build([], 10)))  # length of NC2 with size 10
-    print(len(build([p1, p2], 5)))  # length of P with size 5
+    print(len(build([p1, p2], 5)))  # length of P with size 5"""
