@@ -297,7 +297,7 @@ def build(p, n):
     assert isinstance(n, int)
 
     """store all candidates found"""
-    all_partitions = {ColorPartitions([1], [1], [0], [0]).ret_tuple(), ColorPartitions([1], [1], [1], [1]).ret_tuple(), ColorPartitions([1, 1], [], [0, 1], []).ret_tuple(), ColorPartitions([1, 1], [], [1, 0], []).ret_tuple()}
+    all_partitions = {ColorPartitions([1], [1], [0], [0]).ret_tuple(), ColorPartitions([1], [1], [1], [1]).ret_tuple(), ColorPartitions([1, 1], [], [0, 1], []).ret_tuple(), ColorPartitions([1, 1], [], [1, 0], []).ret_tuple(), ColorPartitions([], [], [], []).ret_tuple()}
 
     """all candidates stored in dict from size to partition"""
     all_partitions_by_size = dict()
@@ -549,8 +549,8 @@ class ColorPartitions(Partition):
 
 if __name__ == "__main__":
 
-    aa = ColorPartitions([2, 2, 3], [2, 2, 2], [1, 0, 1], [1, 1, 0])
+    """aa = ColorPartitions([2, 2, 3], [2, 2, 2], [1, 0, 1], [1, 1, 0])
 
     b = ColorPartitions([1, 2, 3], [2, 2, 2], [1, 0, 1], [1, 0, 1])
 
-    print(len(build([ColorPartitions([1], [1], [1], [0])], 6)))
+    print(len(build([ColorPartitions([1], [1], [1], [0])], 6)))"""

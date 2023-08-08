@@ -1,3 +1,8 @@
+import math
+
+import partition
+from partition import *
+
 import typing
 
 
@@ -182,7 +187,9 @@ def do_tensor_products(all_partitions, already_t, to_tens, stop_whole, max_lengt
         al = to_tens.copy()
         for (i, ii) in al:
             a = tuple_to_partition(i)
-            a = a.tensor_product(tuple_to_partition(ii))
+            b = tuple_to_partition(ii)
+            if a.get_dimension() == b.get_dimension():
+                a = a.tensor_product(b)
             to_tens.remove((i, ii))
             if a.ret_tuple() not in all_partitions:
                 trace[a.ret_tuple()] = ((i, ii), "t")
@@ -280,7 +287,9 @@ def do_composition(all_partitions, already_c, stop_whole, max_length, to_comp, a
         al = to_comp.copy()
 
         for (i, ii) in al:
-            a = tuple_to_partition(i).composition(tuple_to_partition(ii))
+            a = tuple_to_partition(i)
+            if tuple_to_partition(i).get_dimension() == tuple_to_partition(ii).get_dimension():
+                a = tuple_to_partition(i).composition(tuple_to_partition(ii))
             if a.ret_tuple() not in all_partitions and a.size() <= max_length:
                 trace[a.ret_tuple()] = ((i, ii), "c")
                 all_partitions.add(a.ret_tuple())
@@ -318,8 +327,16 @@ def build(p, n, tracing=False, max_artificial=0):
     assert isinstance(p, list)
     assert isinstance(n, int)
 
-    """store all candidates found"""
+    """store all candidates found + base partitions to m = 3"""
     all_partitions = set()
+    dim = 0
+    if p:
+        dim = p[0].get_dimension()
+        for i in p:
+            assert i.get_dimension() == dim, "all input partitions need same dimension"
+
+    all_partitions.add(SpatialPartitions([list(range(1, dim+1))], [list(range(1, dim+1))]).ret_tuple())
+    all_partitions.add(SpatialPartitions([], [list(range(1, dim+1)), list(range(1, dim+1))]).ret_tuple())
 
     """trace dictionary"""
     trace = dict()
@@ -354,7 +371,7 @@ def build(p, n, tracing=False, max_artificial=0):
             max_length = i.size()
 
     if max_artificial:
-        max_length = max_artificial
+        max_length = max(max_length, max_artificial)
 
     """define for all i <= size an empty set in which we fill the corresponding partition of size i (for tensor)"""
     for i in range(max_length+1):
@@ -428,9 +445,9 @@ def build(p, n, tracing=False, max_artificial=0):
 
     """remove all partitions without size n"""
     for i in all_partitions:
-        if tuple_to_partition(i).size() == n:
-            if i not in all_partitions_of_size_n:
-                all_partitions_of_size_n.add(i)
+        #if tuple_to_partition(i).size() == n:
+        #if i not in all_partitions_of_size_n:
+        all_partitions_of_size_n.add(i)
 
     """format every tuple to partition and return"""
 
@@ -462,6 +479,7 @@ class SpatialPartitions:
             :param x: SpatialPartition
             :return: Solution of tensor product of self and x
             """
+        assert self.get_dimension() == x.get_dimension(), "partitions need to have same dimension m"
         ret = SpatialPartitions(self.partition[0].copy(), self.partition[1].copy())
         a = ret.helper_new_id_values(x)
         ret.partition[0] += a.partition[0]
@@ -500,9 +518,7 @@ class SpatialPartitions:
 
                     new_ids[inner_n] = self.partition[0][i][inner_i]
                 else:
-
                     if self.partition[0][i][inner_i] in new_ids and new_ids.get(inner_n) in new_ids:
-
                         """Do path compression if we have the case that we need to merge two tree's together and
                         the nodes we operate on are not a root or a leaf"""
 
@@ -654,6 +670,25 @@ class SpatialPartitions:
             size += len(i)
         return size
 
+    def get_dimension(self):
+
+        if self.partition[0]:
+            for i in self.partition[0]:
+                if i:
+                    return len(i)
+        elif self.partition[1]:
+            for i in self.partition[1]:
+                if i:
+                    return len(i)
+        return 0
+
+    def check_same_dim(self):
+        a = Partition([i[0] for i in self.partition[0]], [i[0] for i in self.partition[1]])
+        for ii in range(self.get_dimension()):
+            if not a.is_equal(Partition([i[ii] for i in self.partition[0]], [i[ii] for i in self.partition[1]])):
+                return False
+        return True
+
     def __eq__(self, other: "SpatialPartitions"):
         """
         Check whether two spatial partitions are equal
@@ -671,12 +706,148 @@ class SpatialPartitions:
 
 
 if __name__ == "__main__":
-    """example of 4.3. 2."""
-    a = SpatialPartitions([], [[1, 1]])
+    pass
+    """example of 4.3. 2. plus you have to remove base partitions"""
+    """a = SpatialPartitions([], [[1, 1]])
     b = SpatialPartitions([[1, 1]], [[1, 1]])
     c = SpatialPartitions([[1, 2]], [[1, 3], [3, 2]])
     d = SpatialPartitions([[1, 2], [2, 3]], [[1, 2], [2, 3]])
 
     p, trace = build([a, b, c], 8, True, 10)
 
-    get_trace(trace, d.ret_tuple())
+    get_trace(trace, d.ret_tuple())"""
+
+    """[P]^(2)"""
+    """a = SpatialPartitions([[1, 3], [2, 4]], [[2, 4], [1, 3]])
+    b = SpatialPartitions([[1, 2]], [[1, 2], [1, 2]])
+
+    c = build([a, b], 12)
+    print(len(c))
+    for iiii in c:
+        assert iiii.check_same_dim()"""
+
+    """P^(2)_2"""
+    """a = SpatialPartitions([], [[1, 1]])
+    cc = SpatialPartitions([[1, 2]], [[1, 3], [3, 2]])
+
+    b = SpatialPartitions([[1, 2], [1, 3]], [[4, 2], [4, 3]])
+    c = SpatialPartitions([[1, 2], [3, 2]], [[1, 4], [3, 4]])
+    d = SpatialPartitions([[1, 2], [3, 4]], [[1, 4], [3, 2]])
+    dd = SpatialPartitions([[1, 2], [3, 4]], [[3, 2], [1, 4]])
+    e = SpatialPartitions([[1, 1]], [[1, 1]])
+
+    pp, tt = build([a, cc], 8, True, 10)
+
+    get_trace(tt, b.ret_tuple())
+    print("..............................")
+    get_trace(tt, c.ret_tuple())
+    print("..............................")
+    get_trace(tt, d.ret_tuple())
+    print("..............................")
+    get_trace(tt, dd.ret_tuple())
+    print("..............................")"""
+
+    """for i in p:
+        print(i.ret_tuple())"""
+
+    """[NC]^(2)_2"""
+
+    """p = build([SpatialPartitions([[1, 2]], [[1, 2]]), SpatialPartitions([], [[1, 2], [1, 2]])], 12)
+
+    print(len(p))
+    
+    for i in p:
+        print(i.ret_tuple())"""
+
+    """[P^(2)]_2"""
+    """a = SpatialPartitions([[1, 2], [3, 4]], [[3, 4], [1, 2]])
+
+    p = build([a], 12)
+
+    print(len(p))
+
+    for i in p:
+        print(i.ret_tuple())"""
+
+    """P^(2)"""
+    """a = SpatialPartitions([], [[1, 2]])
+    b = SpatialPartitions([[1, 2], [1, 3]], [[1, 2], [1, 3]])
+    c = SpatialPartitions([[1, 2], [3, 2]], [[1, 2], [3, 2]])
+    d = SpatialPartitions([[1, 2], [3, 4]], [[1, 4], [3, 2]])
+    dd = SpatialPartitions([[1, 2], [3, 4]], [[3, 2], [1, 4]])
+    ee = SpatialPartitions([], [[1, 1]])
+
+    #p = build([a, b, c, d, e], 0)
+
+    #print(len(p))
+
+    #p = build([a, b, c, d, e], 2)
+
+    #print(len(p))
+
+    #p = build([a, b, c, d, e], 4)
+
+    #print(len(p))
+
+    p, t = build([a, c, d, ee], 6, True)
+    s0 = 0
+    s1 = 0
+    s2 = 0
+    s3 = 0
+    s4 = 0
+    s5 = 0
+    s6 = 0
+    s7 = 0
+    s8 = 0
+    for i in p:
+        match i.size():
+            case 0:
+                s0 += 1
+            case 1:
+                s1 += 1
+            case 2:
+                s2 += 1
+            case 3:
+                s3 += 1
+            case 4:
+                s4 += 1
+            case 5:
+                s5 += 1
+            case 6:
+                s6 += 1
+            case 7:
+                s7 += 1
+            case 8:
+                s8 += 1
+    print(s0)
+    print(s1)
+    print(s2)
+    print(s3)
+    print(s4)
+    print(s5)
+    print(s6)
+    print(s7)
+    print(s8)
+    get_trace(t, dd.ret_tuple())
+
+    print(".......................")
+
+    get_trace(t, b.ret_tuple())
+
+    print(".......................")
+
+    get_trace(t, c.ret_tuple())"""
+
+    """print(len(p))
+
+    p = build([a, b, c, d, e], 8)
+
+    print(len(p))
+
+    p = build([a, b, c, d, e], 10)
+
+    print(len(p))
+
+    p = build([a, b, c, d, e], 12)
+
+    print(len(p))"""

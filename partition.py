@@ -427,7 +427,7 @@ def build(p, n, tracing=False, max_artificial=0):
             max_length = i.size()
 
     if max_artificial:
-        max_length = max_artificial
+        max_length = max(max_length, max_artificial)
 
     """define for all i <= size an empty set in which we fill the corresponding partition of size i (for tensor)"""
     for i in range(max_length+1):
@@ -796,9 +796,9 @@ class Partition:
 
 if __name__ == "__main__":
 
-    a, b = build([Partition([1], [2]), Partition([1, 1], [1, 1])], 4, True)
+    """a, b = build([Partition([1], [2]), Partition([1, 1], [1, 1])], 4, True)
 
-    get_trace(b, Partition([1, 2], [3, 1]).ret_tuple())
+    get_trace(b, Partition([1, 2], [3, 1]).ret_tuple())"""
     """
     # Initialize Partition
     p1 = Partition([1, 2], [2, 1])
