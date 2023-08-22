@@ -2,12 +2,12 @@ import math
 import sympy
 
 from sympy import I
-from sympy.abc import d
 
 """
 The following functions have the only purpose to evaluate results, regarding the papers [Web13] and [BCS09]:
 
 """
+
 
 def g(n):
     outlist = []
@@ -66,7 +66,7 @@ def squeezed_complex(f):
     return outlist
 
 
-def squeezed_complex2(l): #not done!
+def squeezed_complex2(l):  # not done!
     outlist = []
     for k in range(len(l)):
         if k % 2 != 0:
@@ -128,11 +128,27 @@ def s_bessel(k, s):
     return int(1/(s * k + 1) * math.comb(s*k + k, k))
 
 
+def free_bessel(n):
+    assert n % 2 == 0
+    k = n // 2
+    a = 0
+    for b in range(1, k + 1):
+        a += (1/b) * math.comb(k-1, b-1) * math.comb(2*k, b-1)
+    return a
+
+
 def transform(l):
     out = []
     for i in range(len(l)):
         out.append(l[i] * (i + 1))
     return out
+
+
+def fuss_catalan_related(n):
+    assert n % 2 == 0
+    k = n // 2
+
+    return (1/(k+1)) * math.comb(3*k + 1, k)
 
 
 if __name__ == "__main__":
@@ -149,3 +165,12 @@ if __name__ == "__main__":
 
     for i in range(9):
         print(bell_numbers(i))  # all partitions (even part of all partitions)
+
+    for i in range(9):
+        print(inf_bessel(i))  # balanced partitions
+
+    print([free_bessel(2 * i) for i in range(0, 9)])  # non-crossing even block size
+
+    print([fuss_catalan_related(2 * i) for i in range(0, 9)])  # non-crossing partitions with balanced pairs and even number of singletons
+
+
