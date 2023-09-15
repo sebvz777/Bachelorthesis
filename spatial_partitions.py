@@ -707,7 +707,7 @@ class SpatialPartitions:
 
 if __name__ == "__main__":
     pass
-    """example of 4.3. 2. plus you have to remove base partitions"""
+    """example of 4.12.2. plus you have to remove base partitions"""
     """a = SpatialPartitions([], [[1, 1]])
     b = SpatialPartitions([[1, 1]], [[1, 1]])
     c = SpatialPartitions([[1, 2]], [[1, 3], [3, 2]])
@@ -718,13 +718,47 @@ if __name__ == "__main__":
     get_trace(trace, d.ret_tuple())"""
 
     """[P]^(2)"""
-    """a = SpatialPartitions([[1, 3], [2, 4]], [[2, 4], [1, 3]])
-    b = SpatialPartitions([[1, 2]], [[1, 2], [1, 2]])
+    """a = SpatialPartitions([], [[1, 2]])"""
+    """b = SpatialPartitions([[1, 2], [1, 3]], [[1, 2], [1, 3]])
+    c = SpatialPartitions([[1, 2], [3, 4]], [[3, 2], [1, 4]])
+    d = SpatialPartitions([], [[1, 1]])
 
-    c = build([a, b], 12)
-    print(len(c))
-    for iiii in c:
-        assert iiii.check_same_dim()"""
+    bb = SpatialPartitions([[1, 2], [3, 2]], [[1, 2], [3, 2]])
+    cc = SpatialPartitions([[1, 2], [3, 4]], [[1, 4], [3, 2]])
+
+    p, t = build([b, c, d], 8, True, 10)
+
+    get_trace(t, bb.ret_tuple())
+    print("--------------------------------------")
+    get_trace(t, cc.ret_tuple())
+    print("--------------------------------------")
+
+    p, t = build([bb, c, d], 8, True, 10)
+
+    get_trace(t, b.ret_tuple())
+    print("--------------------------------------")
+    get_trace(t, cc.ret_tuple())
+    print("--------------------------------------")
+
+    p, t = build([b, cc, d], 8, True, 10)
+
+    get_trace(t, bb.ret_tuple())
+    print("--------------------------------------")
+    get_trace(t, c.ret_tuple())
+    print("--------------------------------------")
+
+    e = SpatialPartitions([[1, 2]], [[1, 3], [3, 2]])
+
+    p, t = build([e, d], 8, True, 10)
+
+    get_trace(t, b.ret_tuple())
+    print("--------------------------------------")
+    get_trace(t, c.ret_tuple())
+    print("--------------------------------------")
+    get_trace(t, bb.ret_tuple())
+    print("--------------------------------------")
+    get_trace(t, cc.ret_tuple())
+    print("--------------------------------------")"""
 
     """P^(2)_2"""
     """a = SpatialPartitions([], [[1, 1]])
@@ -736,12 +770,12 @@ if __name__ == "__main__":
     dd = SpatialPartitions([[1, 2], [3, 4]], [[3, 2], [1, 4]])
     e = SpatialPartitions([[1, 1]], [[1, 1]])
 
-    pp, tt = build([a, cc], 8, True, 10)
+    pp, tt = build([a, c, dd], 8, True, 10)
 
     get_trace(tt, b.ret_tuple())
     print("..............................")
-    get_trace(tt, c.ret_tuple())
-    print("..............................")
+    get_trace(tt, dd.ret_tuple())"""
+    """print("..............................")
     get_trace(tt, d.ret_tuple())
     print("..............................")
     get_trace(tt, dd.ret_tuple())
