@@ -151,6 +151,22 @@ def fuss_catalan_related(n):
     return (1/(k+1)) * math.comb(3*k + 1, k)
 
 
+def squeezed_shifted_complex_g(k):
+
+    out = 0
+
+    for i1 in range(k+1):
+        for i2 in range(k+1):
+            for i3 in range(k+1):
+                for i4 in range(k+1):
+                    if i1+i2+i3+i4 != k:
+                        continue
+                    else:
+                        out += (math.factorial(k) / (math.factorial(i1) * math.factorial(i2) * math.factorial(i3) * math.factorial(i4))) * (math.sqrt(2)**(i2-2*i3-2*i4)) * g(i2+2*i3)[-1] * g(2*i4)[-1]
+
+    return out
+
+
 if __name__ == "__main__":
 
     print(g(10))  # Partitions with block size 2
@@ -173,4 +189,4 @@ if __name__ == "__main__":
 
     print([fuss_catalan_related(2 * i) for i in range(0, 9)])  # non-crossing partitions with balanced pairs and even number of singletons
 
-
+    print([squeezed_shifted_complex_g(i) for i in range(0, 9)])
