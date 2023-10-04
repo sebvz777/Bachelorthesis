@@ -445,9 +445,8 @@ def build(p, n, tracing=False, max_artificial=0):
 
     """remove all partitions without size n"""
     for i in all_partitions:
-        #if tuple_to_partition(i).size() == n:
-        #if i not in all_partitions_of_size_n:
-        all_partitions_of_size_n.add(i)
+        if tuple_to_partition(i).size() == n:
+            all_partitions_of_size_n.add(i)
 
     """format every tuple to partition and return"""
 
