@@ -797,6 +797,7 @@ class Partition:
         # tree structure return False, else return whether we are at the root at the end of the sequence.
         for curr_edge in pik:
             if (not back_edge[curr_edge]) and (not visited[curr_edge]):
+                # build edges
                 edge[curr_edge] = (curr_node, curr_edge)
                 curr_node = curr_edge
                 back_edge[curr_edge] = not back_edge[curr_edge]
