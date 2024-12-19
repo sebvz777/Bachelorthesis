@@ -760,7 +760,7 @@ if __name__ == "__main__":
     print("--------------------------------------")"""
 
     """P^(2)_2"""
-    """a = SpatialPartitions([], [[1, 1]])
+    a = SpatialPartitions([], [[1, 1]])
     cc = SpatialPartitions([[1, 2]], [[1, 3], [3, 2]])
 
     b = SpatialPartitions([[1, 2], [1, 3]], [[4, 2], [4, 3]])
@@ -769,11 +769,13 @@ if __name__ == "__main__":
     dd = SpatialPartitions([[1, 2], [3, 4]], [[3, 2], [1, 4]])
     e = SpatialPartitions([[1, 1]], [[1, 1]])
 
-    pp, tt = build([a, c, dd], 8, True, 10)
+    print(len(build([a, c, dd], 6)))
 
-    get_trace(tt, b.ret_tuple())
-    print("..............................")
-    get_trace(tt, dd.ret_tuple())"""
+    #pp, tt = build([a, c, dd], 8, True, 10)
+
+    #get_trace(tt, b.ret_tuple())
+    #print("..............................")
+    #get_trace(tt, dd.ret_tuple())
     """print("..............................")
     get_trace(tt, d.ret_tuple())
     print("..............................")

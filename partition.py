@@ -607,7 +607,7 @@ class Partition:
         p0 = ret.partition[0]
         ret.partition[0] = ret.partition[1]
         ret.partition[1] = p0
-        self.hash_form()
+        ret.hash_form()
 
         return ret
 
@@ -674,7 +674,6 @@ class Partition:
         for i, n in enumerate(q_copy_new_ids[1]):
 
             if n not in new_ids:
-
                 new_ids[n] = self.partition[0][i]
             else:
 
@@ -682,7 +681,7 @@ class Partition:
 
                     """Do path compression if we have the case that we need to merge two tree's together and
                     the nodes we operate on are not a root or a leaf"""
-                    for ii in [n]:
+                    for ii in [n, self.partition[0][i]]:
                         path = [ii]
                         already_in = set()
                         already_in.add(new_ids.get(ii))
@@ -777,6 +776,53 @@ class Partition:
             """
         return tuple([tuple(self.partition[0].copy()), tuple(self.partition[1].copy())])
 
+    def check_pik(self):
+
+        pik = self.partition[0].copy() + list(reversed(self.partition[1].copy()))
+        max_point = max(pik)
+
+        # initialize arrays
+        back_edge = [False for _ in range(0, max_point + 1)]
+        visited = [False for _ in range(0, max_point + 1)]
+
+        # index of array `edges` correspond to edge value in walk, where elements
+        # in array are of the form (from_node, to_node)
+        edge = [() for _ in range(0, max_point + 1)]
+
+        # The root node is represented as 0. For all other nodes, the node's value corresponds to the last edge
+        # in the path where the node was first visited.
+        curr_node = 0
+
+        # Iterate through elements in pik (the walk) and build `edges` from it. If we get to inconsistencies in the
+        # tree structure return False, else return whether we are at the root at the end of the sequence.
+        for curr_edge in pik:
+            if (not back_edge[curr_edge]) and (not visited[curr_edge]):
+                edge[curr_edge] = (curr_node, curr_edge)
+                curr_node = curr_edge
+                back_edge[curr_edge] = not back_edge[curr_edge]
+                visited[curr_edge] = True
+                continue
+
+            if visited[curr_edge] and back_edge[curr_edge]:
+                # check whether curr_edge can be reached from curr_node, if not return False
+                if curr_node != edge[curr_edge][1]:
+                    return False
+                curr_node = edge[curr_edge][0]
+                back_edge[curr_edge] = not back_edge[curr_edge]
+
+                continue
+
+            if visited[curr_edge] and not back_edge[curr_edge]:
+                # check whether curr_edge can be reached from curr_node, if not return False
+                if curr_node != edge[curr_edge][0]:
+                    return False
+                curr_node = edge[curr_edge][1]
+                back_edge[curr_edge] = not back_edge[curr_edge]
+
+                continue
+
+        return curr_node == 0
+
     def __repr__(self):
         return f"[{self.partition[0]} \n {self.partition[1]}]"
 
@@ -796,14 +842,16 @@ class Partition:
 
 if __name__ == "__main__":
 
-    """a, b = build([Partition([1], [2]), Partition([1, 1], [1, 1])], 4, True)
+    P = build([Partition([1], [1, 1]), Partition([1, 2], [2, 1])], 6)
+    NC = build([Partition([1, 1], [1, 1])], 6)
 
-    get_trace(b, Partition([1, 2], [3, 1]).ret_tuple())"""
-    """
-    # Initialize Partition
-    p1 = Partition([1, 2], [2, 1])
-    p2 = Partition([1, 1], [1])
+    not_in = set()
+    for p in P:
+        if not p.check_pik():
+            not_in.add(p)
 
-    # Run constructing algorithm
-    print(len(build([], 10)))  # length of NC2 with size 10
-    print(len(build([p1, p2], 5)))  # length of P with size 5"""
+    print(len(not_in))
+    print(len(P))
+    print(len(NC))
+
+

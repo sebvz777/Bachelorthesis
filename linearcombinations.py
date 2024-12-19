@@ -362,5 +362,9 @@ class Operations:
 
 if __name__ == "__main__":
 
-    """prints out list of the zero points"""
-    generate_A_B_random(200, 3000, 4, 4)
+    a = [1, 2, 3, 2]
+
+    a.remove(2)
+
+    print(a)
+

@@ -549,8 +549,8 @@ class ColorPartitions(Partition):
 
 if __name__ == "__main__":
 
-    """aa = ColorPartitions([2, 2, 3], [2, 2, 2], [1, 0, 1], [1, 1, 0])
+    aa = ColorPartitions([2, 2, 3], [2, 2, 2], [1, 0, 1], [1, 1, 0])
 
     b = ColorPartitions([1, 2, 3], [2, 2, 2], [1, 0, 1], [1, 0, 1])
 
-    print(len(build([ColorPartitions([1], [1], [1], [0])], 6)))"""
+    print(len(build([ColorPartitions([1], [1], [1], [0])], 6)))
