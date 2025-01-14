@@ -854,5 +854,3 @@ if __name__ == "__main__":
     print(len(not_in))
     print(len(P))
     print(len(NC))
-
-
